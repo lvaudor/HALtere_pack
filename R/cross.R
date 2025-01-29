@@ -3,7 +3,7 @@
 #' @return a tibble
 #' @export
 #' @examples
-#' data=extract_collection("BIOEENVIS", nmax=200)
+#' data=extract_collection("BIOEENVIS", nmax=+Inf)
 #' data_ref_authors=tidy_ref_authors(data)
 #' cross_by_group(data_ref_authors %>% filter(id_ref==1),var_to_cross="affiliation")
 cross_by_group=function(data,var_to_cross="name"){

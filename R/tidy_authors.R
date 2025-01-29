@@ -3,9 +3,9 @@
 #' @return a tibble
 #' @export
 #' @examples
-#' data=extract_collection("BIOEENVIS", nmax=200)
+#' data=extract_collection("BIOEENVIS", nmax=+Inf)
 #' tidy_ref_authors(data)
-tidy_ref_authors=function(data,method="longest"){
+tidy_ref_authors=function(data,method="shortest"){
   dat=data %>%
     tidyr::unnest(cols=c("authIdHasPrimaryStructure_fs")) %>%
     dplyr::mutate(auth_and_aff=authIdHasPrimaryStructure_fs) %>%
@@ -16,11 +16,10 @@ tidy_ref_authors=function(data,method="longest"){
   if(method=="longest"){foptimum=max}
   if(method=="shortest"){foptimum=min}
   tib_authors_names=tibble::tibble(auth=data %>%
-                                     dplyr::pull(authAlphaLastNameFirstNameId_fs) %>%
+                                     dplyr::pull(authIdFullName_fs) %>%
                                      unique() %>%
                                      unlist()) %>%
-    tidyr::separate(auth, sep="AlphaSep_",into=c("dump","name_var")) %>%
-    tidyr::separate(name_var,sep="_FacetSep_", into=c("name_var","id_internal"))
+    tidyr::separate(auth, sep="_FacetSep_",into=c("id_internal","name_var"))
   tib_authors_names_with_internal_id=tib_authors_names %>%
     dplyr::filter(id_internal!=0) %>%
     dplyr::arrange(id_internal) %>%
@@ -73,11 +72,6 @@ tidy_ref_authors=function(data,method="longest"){
     dplyr::mutate(affiliation=dplyr::case_when(is.na(affiliation)~affmaj,
                                                TRUE~affiliation)) %>%
     dplyr::select(-affmaj)
-  # dat_nrefs=dat %>%
-  #   dplyr::group_by(name,docType_s,producedDateY_i) %>%
-  #   dplyr::summarise(nrefs=dplyr::n(),.groups="drop")
-  # dat=dat %>%
-  #   dplyr::left_join(dat_nrefs,by=c("name","docType_s","producedDateY_i"))
   return(dat)
 }
 
@@ -86,13 +80,37 @@ tidy_ref_authors=function(data,method="longest"){
 #' @return a tibble
 #' @export
 #' @examples
-#' data=extract_collection("BIOEENVIS", nmax=200)
+#' data=extract_collection("EVS_UMR5600", nmax=200)
 #' tidy_authors(data)
-tidy_authors=function(data,method="longest"){
-  dat=tidy_ref_authors(data,method=method)
-  dat=dat %>%
+tidy_authors=function(data,method="shortest"){
+  dat_ref_authors=tidy_ref_authors(data,method=method)
+  dat_authors=dat_ref_authors %>%
     dplyr::group_by(name,affiliation, producedDateY_i, docType_s) %>%
-    dplyr::summarise(nrefs=dplyr::n(),
+    dplyr::summarise(nrefs=dplyr::n_distinct(id_ref),
                      .groups="drop")
-  return(dat)
+
+  res=data %>%
+    dplyr::select(title_en,text,id_ref) %>%
+    dplyr::left_join(dat_ref_authors,by="id_ref") %>%
+    tidytext::unnest_tokens(output=word,input=text,token="words")%>%
+    dplyr::left_join(lexicon_en,by="word") %>%
+    dplyr::filter(is.na(type)| type %in% c("adj","ver","nom")) %>%
+    dplyr::mutate(lemma_completed=dplyr::case_when(is.na(lemma)~word,
+                                                   TRUE~lemma))
+  spec_unique=mixr::tidy_specificities(res %>%
+                                   dplyr::filter(!is.na(lemma)),
+                                 cat1=name,cat2=lemma) %>%
+    dplyr::arrange(name,desc(spec)) %>%
+    dplyr::group_by(name) %>%
+    tidyr::nest() %>%
+    dplyr::mutate(data=purrr::map(data,~.x[1,])) %>%
+    tidyr::unnest(cols=c(data)) %>%
+    dplyr::ungroup()
+  dat_authors=dat_authors %>%
+    dplyr::left_join(spec_unique %>%
+                       dplyr::select(name,lemma,spec),
+                     by="name") %>%
+    dplyr::mutate(lemma=dplyr::case_when(is.na(lemma)~name,
+                                         TRUE~lemma)) %>%
+  return(dat_authors)
 }

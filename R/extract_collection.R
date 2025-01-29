@@ -3,7 +3,7 @@
     #' @return a tibble
     #' @export
     #' @examples
-    #' extract_collection("BIOEENVIS", nmax=20)
+    #' publis=extract_collection("BIOEENVIS", nmax=20)
     extract_collection=function(collection, nmax=+Inf){
       #URL de l'API HAL
       url <- "https://api.archives-ouvertes.fr/search/"
@@ -19,15 +19,14 @@
           start = i*100,                     # Début de la pagination
           wt = "json",                   # Format de réponse en JSON
           fl = "authIdHasPrimaryStructure_fs,
-        authAlphaLastNameFirstNameId_fs,
+        authIdFullName_fs,
         producedDateY_i,
         title_s,
         journalTitle_s,
         docType_s,
-      keyword_s,
-      en_abstract_s,
-      language_s"# Champs demandés
-        )
+        keyword_s,
+        en_abstract_s,
+        language_s")
 
         # Effectuer la requête GET
         data_tmp<- httr::GET(url, query = params) %>%
@@ -54,6 +53,11 @@
         dplyr::select(-data,-ntitle_en)
       dat=data %>%
         dplyr::mutate(title_s=purrr::map_chr(title_s,~.x[1])) %>%
-        dplyr::left_join(dat_title,by=c("id_ref"))
+        dplyr::left_join(dat_title,by=c("id_ref")) %>%
+        dplyr::mutate(en_abstract_s=purrr::map_chr(en_abstract_s,
+                                                   function(x){if(is.null(x)){return(NA)}else{return(x)}})) %>%
+        dplyr::mutate(keywords_s=purrr::map_chr(keyword_s,
+                                                ~stringr::str_c(.x,collapse="; "))) %>%
+        tidyr::unite("text",keywords_s,en_abstract_s,title_en,remove=FALSE)
       return(dat)
 }

@@ -5,18 +5,24 @@
 #' @return a tibble
 #' @export
 #' @examples
-#' data=extract_collection("BIOEENVIS", nmax=200)
+#' data=extract_collection("BIOEENVIS", nmax=300)
 #' data_ref_authors=tidy_ref_authors(data)
 #' data_authors=tidy_authors(data)
-#' data_crossed=cross(data_ref_authors,data_authors,var_to_cross="name")
-#' graph=build_network(data_crossed,data_by_structure=data_authors,number_of_nodes=100)
+#' data_crossed=HALtere::cross(data_ref_authors,data_authors,var_to_cross="name")
+#' graph=build_network(data_crossed,data_by_structure=data_authors,number_of_nodes=400)
 build_network=function(data_crossed,
                        data_by_structure,
                        number_of_nodes=60
                        ){
+  # Combien de refs au total (dependant de type de doc et année)
   data_summary=data_by_structure %>%
-    dplyr::group_by(name,affiliation) %>%
-    dplyr::summarise(nrefs=sum(nrefs),.groups="drop")
+    dplyr::group_by(across(-c(docType_s,producedDateY_i,nrefs))) %>%
+    dplyr::summarise(nrefs=sum(nrefs),.groups="drop") %>%
+    dplyr::group_by(name) %>%
+    dplyr::top_n(n=1,nrefs) %>%
+    dplyr::ungroup()
+
+  # Combien de liens entre chaque paire de noeuds
   data=data_crossed %>%
     dplyr::group_by(val1,val2) %>%
     dplyr::summarise(nlinks=sum(nlinks),
@@ -73,11 +79,11 @@ build_network=function(data_crossed,
 #' data=extract_collection("BIOEENVIS", nmax=200)
 #' data_authors=tidy_authors(data)
 #' data_crossed=HALtere::cross(data_authors,var_grouping="id_ref",var_to_cross="name")
-#' graph=build_network(data_crossed,data_authors,number_of_nodes=50)
+#' graph=build_network(data_crossed,data_authors,number_of_nodes=200)
 #' plot_network(graph, colorvar="name")
 plot_network=function(graph,
                       number_of_names=30,
-                      margin=5,
+                      namevar="lemma",
                       colorvar="name",
                       sizevar="nrefs",
                       colors=c("red", "yellow", "blue")){
@@ -85,6 +91,7 @@ plot_network=function(graph,
   edges=graph$edges
   colorvar=rlang::sym(colorvar)
   sizevar=rlang::sym(sizevar)
+  namevar=rlang::sym(namevar)
   palROB <- grDevices::colorRampPalette(colors)
   keep_names=nodes %>%
     dplyr::arrange(desc(betweenness)) %>%
@@ -93,35 +100,26 @@ plot_network=function(graph,
     .[1:number_of_names]
   fmatch=function(vec){match(vec, sort(unique(vec)))}
   nodes=nodes %>%
-    dplyr::mutate(name_to_display=dplyr::case_when(name %in% keep_names ~name,
+    dplyr::mutate(name_to_display=dplyr::case_when(name %in% keep_names ~!!namevar,
                                                    TRUE~"")) %>%
     dplyr::mutate(marker_color=fmatch(!!colorvar),
                   size=dplyr::percent_rank(!!sizevar)*10)
   if("affiliation" %in% colnames(nodes)){
     nodes=nodes %>%
-      dplyr::mutate(hover=glue::glue("Name: {name} <br>
-                                     Affiliation: {affiliation}
-                                     <br> Number of references: {nrefs}"))
+      dplyr::mutate(hover=glue::glue("Name: {name}
+                                      Specificity: {lemma}
+                                      Affiliation: {affiliation}
+                                      Number of references: {nrefs}"))
   }else{
     nodes=nodes %>%
-      dplyr::mutate(hover=glue::glue("Name: {name} <br> Number of references: {nrefs}"))
+      dplyr::mutate(hover=glue::glue("Name: {name}
+                                      Number of references: {nrefs}"))
   }
   ncols=max(nodes$marker_color)
   cols=palROB(ncols)
   # remove nodes that are too marginal
   nodes_to_display=nodes %>%
     dplyr::mutate(marker_color=cols[nodes$marker_color])
-  #%>%
-    # dplyr::mutate(xsup=mean(x)+margin*sd(x),
-    #        xinf=mean(x)-margin*sd(x),
-    #        ysup=mean(y)+margin*sd(y),
-    #        yinf=mean(y)-margin*sd(y)) %>%
-    # dplyr::filter(x>xinf & x<xsup & y>yinf & y<ysup) %>%
-    # dplyr::select(-xsup,-xinf,-ysup,-yinf)
-
-
-  #nmin=quantile(edges$n,1-prop_edges)
-  #edges=filter(edges,n>=nmin)
   # Créer le graphique interactif avec plotly
   fig <- plotly::plot_ly() %>%
     # Ajouter les arêtes

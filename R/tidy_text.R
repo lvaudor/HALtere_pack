@@ -1,18 +1,19 @@
 #' Description
 #' @param data a tibble produced with the extract_collection() function
+#' @param column the name of the column to be tokenized
 #' @return a tibble
 #' @export
 #' @examples
-#' data=extract_collection("BIOEENVIS", nmax=20)
-#' data_text=tidy_text(data,"title_en")
+#' data_BIOEENVIS=extract_collection("BIOEENVIS", nmax=+Inf)
+#' data_text=tidy_text(data_BIOEENVIS,"title_en")
 tidy_text=function(data,column){
   string_column=column
   column=rlang::sym(column)
-  data=data %>%
+  res=data %>%
     dplyr::filter(!is.na(title_en)) %>%
     tidytext::unnest_tokens(input=!!column,output=word, token="words")
   data(lexicon_en)
-  data=data %>%
+  res=res %>%
     dplyr::left_join(lexicon_en,by="word") %>%
     dplyr::filter(is.na(type)| type %in% c("adj","ver","nom")) %>%
     dplyr::select(id_ref,producedDateY_i,word,lemma,type) %>%
