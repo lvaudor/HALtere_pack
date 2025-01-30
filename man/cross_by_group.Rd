@@ -4,10 +4,10 @@
 \alias{cross_by_group}
 \title{Description}
 \usage{
-cross_by_group(data, var_to_cross = "name")
+cross_by_group(data_ref_authors_oneref)
 }
 \arguments{
-\item{data}{a tibble produced with the tidy_authors() function}
+\item{data}{a tibble produced with the tidy_ref_authors() function and containing lines only for one reference}
 }
 \value{
 a tibble
@@ -16,7 +16,8 @@ a tibble
 Description
 }
 \examples{
-data=extract_collection("BIOEENVIS", nmax=200)
+data=extract_collection("BIOEENVIS", nmax=+Inf)
 data_ref_authors=tidy_ref_authors(data)
-cross_by_group(data_ref_authors \%>\% filter(id_ref==1),var_to_cross="affiliation")
+data_groups=tidy_groups(data_ref_authors)
+cross_by_group(data_ref_authors \%>\% dplyr::filter(id_ref==1))
 }

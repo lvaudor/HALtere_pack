@@ -4,7 +4,7 @@
 #' @export
 #' @examples
 #' data=extract_collection("BIOEENVIS", nmax=+Inf)
-#' tidy_ref_authors(data)
+#' data_ref_authors=tidy_ref_authors(data)
 tidy_ref_authors=function(data,method="shortest"){
   dat=data %>%
     tidyr::unnest(cols=c("authIdHasPrimaryStructure_fs")) %>%
@@ -42,7 +42,7 @@ tidy_ref_authors=function(data,method="shortest"){
                 unique(),by=c("id_internal")) %>%
     dplyr::mutate(name=dplyr::case_when(is.na(name)~auth,
                           TRUE~name)) %>%
-    dplyr::select(title_s,journalTitle_s,docType_s,producedDateY_i,id_ref,affiliation,name)
+    dplyr::select(-starts_with("auth"))
   # For each year and name keep main affiliation
   dat_aff=dat  %>%
     dplyr::select(producedDateY_i,affiliation,name) %>%
@@ -76,41 +76,41 @@ tidy_ref_authors=function(data,method="shortest"){
 }
 
 #' Description
-#' @param data a tibble produced with the extract_collection() function
+#' @param data_ref_authors a tibble produced with the extract_collection() function
 #' @return a tibble
 #' @export
 #' @examples
 #' data=extract_collection("EVS_UMR5600", nmax=200)
-#' tidy_authors(data)
-tidy_authors=function(data,method="shortest"){
-  dat_ref_authors=tidy_ref_authors(data,method=method)
-  dat_authors=dat_ref_authors %>%
+#' data_ref_authors=tidy_ref_authors(data)
+#' data_labs=tidy_groups(data,type="labs")
+tidy_groups=function(data_ref_authors,method="shortest", type="people"){
+  if(type=="labs"){data_ref_authors=data_ref_authors %>%
+    dplyr::mutate(name=affiliation)}
+  dat_groups=data_ref_authors %>%
     dplyr::group_by(name,affiliation, producedDateY_i, docType_s) %>%
     dplyr::summarise(nrefs=dplyr::n_distinct(id_ref),
                      .groups="drop")
 
-  res=data %>%
-    dplyr::select(title_en,text,id_ref) %>%
-    dplyr::left_join(dat_ref_authors,by="id_ref") %>%
+   res=data_ref_authors %>%
     tidytext::unnest_tokens(output=word,input=text,token="words")%>%
     dplyr::left_join(lexicon_en,by="word") %>%
     dplyr::filter(is.na(type)| type %in% c("adj","ver","nom")) %>%
     dplyr::mutate(lemma_completed=dplyr::case_when(is.na(lemma)~word,
                                                    TRUE~lemma))
-  spec_unique=mixr::tidy_specificities(res %>%
-                                   dplyr::filter(!is.na(lemma)),
-                                 cat1=name,cat2=lemma) %>%
+  spec_unique=mixr::tidy_specificities(res %>% dplyr::filter(!is.na(lemma)),
+                                       cat1=name,
+                                       cat2=lemma) %>%
     dplyr::arrange(name,desc(spec)) %>%
     dplyr::group_by(name) %>%
     tidyr::nest() %>%
     dplyr::mutate(data=purrr::map(data,~.x[1,])) %>%
     tidyr::unnest(cols=c(data)) %>%
     dplyr::ungroup()
-  dat_authors=dat_authors %>%
+  dat_groups=dat_groups %>%
     dplyr::left_join(spec_unique %>%
                        dplyr::select(name,lemma,spec),
                      by="name") %>%
     dplyr::mutate(lemma=dplyr::case_when(is.na(lemma)~name,
                                          TRUE~lemma)) %>%
-  return(dat_authors)
+  return(dat_groups)
 }

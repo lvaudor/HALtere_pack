@@ -4,12 +4,12 @@
 \alias{build_network}
 \title{Description}
 \usage{
-build_network(data_crossed, data_by_structure, number_of_nodes = 60)
+build_network(data_crossed, data_groups, number_of_nodes = 60)
 }
 \arguments{
 \item{data_crossed}{data_crossed (by author or affiliation)}
 
-\item{data_by_structure}{data_authors}
+\item{data_groups}{data_authors}
 
 \item{number_of_nodes}{the number of nodes}
 }
@@ -22,7 +22,14 @@ Description
 \examples{
 data=extract_collection("BIOEENVIS", nmax=200)
 data_ref_authors=tidy_ref_authors(data)
-data_authors=tidy_authors(data)
-data_crossed=cross(data_ref_authors,data_authors,var_to_cross="name")
-graph=build_network(data_crossed,data_by_structure=data_authors,number_of_nodes=100)
+
+data_groups=tidy_groups(data_ref_authors,type="people")
+data_crossed=HALtere::cross(data_groups)
+graph=build_network(data_crossed,data_groups,number_of_nodes=200)
+
+data_groups=tidy_groups(data_ref_authors,type="labs")
+data_crossed=HALtere::cross(data_groups)
+graph=build_network(data_crossed,data_groups,number_of_nodes=200)
+
+plot_network(graph, colorvar="name")
 }

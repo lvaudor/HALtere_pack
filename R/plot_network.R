@@ -1,21 +1,28 @@
 #' Description
 #' @param data_crossed data_crossed (by author or affiliation)
-#' @param data_by_structure data_authors
+#' @param data_groups data_authors
 #' @param number_of_nodes the number of nodes
 #' @return a tibble
 #' @export
 #' @examples
-#' data=extract_collection("BIOEENVIS", nmax=300)
+#' data=extract_collection("BIOEENVIS", nmax=200)
 #' data_ref_authors=tidy_ref_authors(data)
-#' data_authors=tidy_authors(data)
-#' data_crossed=HALtere::cross(data_ref_authors,data_authors,var_to_cross="name")
-#' graph=build_network(data_crossed,data_by_structure=data_authors,number_of_nodes=400)
+#'
+#' data_groups=tidy_groups(data_ref_authors,type="people")
+#' data_crossed=HALtere::cross(data_groups)
+#' graph=build_network(data_crossed,data_groups,number_of_nodes=200)
+#'
+#' data_groups=tidy_groups(data_ref_authors,type="labs")
+#' data_crossed=HALtere::cross(data_groups)
+#' graph=build_network(data_crossed,data_groups,number_of_nodes=200)
+#'
+#' plot_network(graph, colorvar="name")
 build_network=function(data_crossed,
-                       data_by_structure,
+                       data_groups,
                        number_of_nodes=60
                        ){
   # Combien de refs au total (dependant de type de doc et année)
-  data_summary=data_by_structure %>%
+  data_summary=data_groups %>%
     dplyr::group_by(across(-c(docType_s,producedDateY_i,nrefs))) %>%
     dplyr::summarise(nrefs=sum(nrefs),.groups="drop") %>%
     dplyr::group_by(name) %>%
@@ -77,9 +84,16 @@ build_network=function(data_crossed,
 #' @export
 #' @examples
 #' data=extract_collection("BIOEENVIS", nmax=200)
-#' data_authors=tidy_authors(data)
-#' data_crossed=HALtere::cross(data_authors,var_grouping="id_ref",var_to_cross="name")
-#' graph=build_network(data_crossed,data_authors,number_of_nodes=200)
+#' data_ref_authors=tidy_ref_authors(data)
+#'
+#' data_groups=tidy_groups(data_ref_authors,type="people")
+#' data_crossed=HALtere::cross(data_groups)
+#' graph=build_network(data_crossed,data_groups,number_of_nodes=200)
+#'
+#' data_groups=tidy_groups(data_ref_authors,type="labs")
+#' data_crossed=HALtere::cross(data_groups)
+#' graph=build_network(data_crossed,data_groups,number_of_nodes=200)
+#'
 #' plot_network(graph, colorvar="name")
 plot_network=function(graph,
                       number_of_names=30,

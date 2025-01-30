@@ -7,7 +7,7 @@
 plot_network(
   graph,
   number_of_names = 30,
-  margin = 5,
+  namevar = "lemma",
   colorvar = "name",
   sizevar = "nrefs",
   colors = c("red", "yellow", "blue")
@@ -15,8 +15,6 @@ plot_network(
 }
 \arguments{
 \item{number_of_names}{the number of names to display,}
-
-\item{margin}{the number of standard deviations to keep nodes}
 
 \item{colorvar}{the variable to take into account to define node color}
 
@@ -27,6 +25,8 @@ plot_network(
 \item{data}{a tibble produced with the cross() function}
 
 \item{number_of_nodes}{the number of nodes to display}
+
+\item{margin}{the number of standard deviations to keep nodes}
 }
 \value{
 a tibble
@@ -36,8 +36,15 @@ Description
 }
 \examples{
 data=extract_collection("BIOEENVIS", nmax=200)
-data_authors=tidy_authors(data)
-data_crossed=HALtere::cross(data_authors,var_grouping="id_ref",var_to_cross="name")
-graph=build_network(data_crossed,data_authors,number_of_nodes=50)
+data_ref_authors=tidy_ref_authors(data)
+
+data_groups=tidy_groups(data_ref_authors,type="people")
+data_crossed=HALtere::cross(data_groups)
+graph=build_network(data_crossed,data_groups,number_of_nodes=200)
+
+data_groups=tidy_groups(data_ref_authors,type="labs")
+data_crossed=HALtere::cross(data_groups)
+graph=build_network(data_crossed,data_groups,number_of_nodes=200)
+
 plot_network(graph, colorvar="name")
 }

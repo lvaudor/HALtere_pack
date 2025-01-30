@@ -4,12 +4,12 @@
 \alias{cross}
 \title{Description}
 \usage{
-cross(data_by_ref, data_by_structure, var_to_cross)
+cross(data_groups)
 }
 \arguments{
-\item{data_by_ref}{data with one line=one ref}
+\item{data_groups}{data with one line=one structure or person}
 
-\item{data_by_structure}{data with one line=one structure or person}
+\item{data_by_ref}{data with one line=one ref}
 }
 \value{
 a tibble
@@ -20,7 +20,8 @@ Description
 \examples{
 data=extract_collection("BIOEENVIS", nmax=200)
 data_ref_authors=tidy_ref_authors(data)
-data_authors=tidy_authors(data)
-HALtere::cross(data_ref_authors,data_authors,var_to_cross="affiliation")
-HALtere::cross(data_ref_authors,data_authors,var_to_cross="name")
+data_groups=tidy_groups(data)
+HALtere::cross(data_groups)
+data_groups=tidy_groups(data_ref_authors,type="labs")
+HALtere::cross(data_groups)
 }

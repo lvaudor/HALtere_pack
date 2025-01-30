@@ -4,7 +4,7 @@
 \alias{tidy_ref_authors}
 \title{Description}
 \usage{
-tidy_ref_authors(data, method = "longest")
+tidy_ref_authors(data, method = "shortest")
 }
 \arguments{
 \item{data}{a tibble produced with the extract_collection() function}
@@ -16,6 +16,6 @@ a tibble
 Description
 }
 \examples{
-data=extract_collection("BIOEENVIS", nmax=200)
-tidy_ref_authors(data)
+data=extract_collection("BIOEENVIS", nmax=+Inf)
+data_ref_authors=tidy_ref_authors(data)
 }

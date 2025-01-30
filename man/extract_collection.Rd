@@ -16,5 +16,5 @@ a tibble
 Description
 }
 \examples{
-extract_collection("BIOEENVIS", nmax=20)
+publis=extract_collection("BIOEENVIS", nmax=20)
 }

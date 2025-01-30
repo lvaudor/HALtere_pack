@@ -8,6 +8,8 @@ tidy_text(data, column)
 }
 \arguments{
 \item{data}{a tibble produced with the extract_collection() function}
+
+\item{column}{the name of the column to be tokenized}
 }
 \value{
 a tibble
@@ -16,6 +18,6 @@ a tibble
 Description
 }
 \examples{
-data=extract_collection("BIOEENVIS", nmax=20)
-data_text=tidy_text(data,"title_en")
+data_BIOEENVIS=extract_collection("BIOEENVIS", nmax=+Inf)
+data_text=tidy_text(data_BIOEENVIS,"title_en")
 }
