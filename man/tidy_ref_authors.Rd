@@ -16,6 +16,6 @@ a tibble
 Description
 }
 \examples{
-data=extract_collection("BIOEENVIS", nmax=+Inf)
+data=extract_collection("BIOEENVIS", nmax=200)
 data_ref_authors=tidy_ref_authors(data)
 }

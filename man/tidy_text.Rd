@@ -19,5 +19,5 @@ Description
 }
 \examples{
 data_BIOEENVIS=extract_collection("BIOEENVIS", nmax=+Inf)
-data_text=tidy_text(data_BIOEENVIS,"title_en")
+data_text=tidy_text(data_BIOEENVIS,"text")
 }

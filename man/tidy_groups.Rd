@@ -18,5 +18,5 @@ Description
 \examples{
 data=extract_collection("EVS_UMR5600", nmax=200)
 data_ref_authors=tidy_ref_authors(data)
-data_labs=tidy_groups(data,type="labs")
+data_labs=tidy_groups(data_ref_authors,type="labs")
 }

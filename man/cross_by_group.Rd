@@ -4,7 +4,7 @@
 \alias{cross_by_group}
 \title{Description}
 \usage{
-cross_by_group(data_ref_authors_oneref)
+cross_by_group(data_ref_authors_oneref, var_groups = "name")
 }
 \arguments{
 \item{data}{a tibble produced with the tidy_ref_authors() function and containing lines only for one reference}
