@@ -18,6 +18,7 @@ tidy_text=function(data,column){
     dplyr::filter(is.na(type)| type %in% c("adj","ver","nom")) %>%
     dplyr::select(id_ref,producedDateY_i,word,lemma,type) %>%
     dplyr::group_by(id_ref) %>%
-    dplyr::mutate(n=purrr::map_int(lemma,~length(is.na)))
+    dplyr::mutate(n=purrr::map_int(lemma,~length(is.na))) %>%
+    ungroup()
   return(res)
 }
