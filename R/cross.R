@@ -6,31 +6,31 @@
 #' data_ref_authors=tidy_ref_authors(data)
 #' data_groups=tidy_groups(data_ref_authors)
 #' cross_by_group(data_ref_authors %>% dplyr::filter(id_ref==1))
-cross_by_group=function(data_ref_authors_oneref){
-  values=data_ref_authors_oneref %>%
-    dplyr::pull(name)
+cross_by_group=function(data_ref_authors_oneref, var_groups="name"){
+  values=unique(data_ref_authors_oneref[[var_groups]])
   values_crossed=tidyr::expand_grid(values,values)  %>%
     dplyr::mutate(val1=values...1,val2=values...2)
   return(values_crossed)
 }
 #' Description
-#' @param data_by_ref data with one line=one ref
-#' @param data_groups data with one line=one structure or person
+#' @param data_groups data with one line=one group (defined as people or labs)
+#' @param data_ref_authors data with one line=one ref & one author
 #' @return a tibble
 #' @export
 #' @examples
 #' data=extract_collection("BIOEENVIS", nmax=200)
 #' data_ref_authors=tidy_ref_authors(data)
 #' data_groups=tidy_groups(data)
-#' HALtere::cross(data_groups)
+#' HALtere::cross(data_groups, data_ref_authors)
 #' data_groups=tidy_groups(data_ref_authors,type="labs")
-#' HALtere::cross(data_groups)
-cross=function(data_groups){
+#' HALtere::cross(data_groups,data_ref_authors)
+cross=function(data_groups,data_ref_authors){
+  if(all(data_groups$name==data_groups$affiliation)){var_groups="affiliation"}else{var_groups="name"}
   crossed_data=data_ref_authors%>%
     dplyr::group_by(id_ref,producedDateY_i,docType_s) %>%
     tidyr::nest() %>%
     dplyr::mutate(data=purrr::map(data,
-                                  .f=~HALtere:::cross_by_group(.x))) %>%
+                                  .f=~HALtere:::cross_by_group(.x,var_groups))) %>%
     tidyr::unnest(cols=c("data")) %>%
     dplyr::group_by(val1,val2,docType_s,producedDateY_i) %>%
     dplyr::summarise(nlinks=dplyr::n(),.groups="drop") %>%

@@ -3,7 +3,7 @@
 #' @return a tibble
 #' @export
 #' @examples
-#' data=extract_collection("BIOEENVIS", nmax=+Inf)
+#' data=extract_collection("BIOEENVIS", nmax=200)
 #' data_ref_authors=tidy_ref_authors(data)
 tidy_ref_authors=function(data,method="shortest"){
   dat=data %>%
@@ -12,7 +12,7 @@ tidy_ref_authors=function(data,method="shortest"){
     tidyr::separate(auth_and_aff,sep="_JoinSep_", into=c("auth","affiliation")) %>%
     tidyr::separate(auth, sep="_FacetSep_",into=c("id_auth","auth")) %>%
     tidyr::separate(id_auth, sep="-",into=c("id_HAL","id_internal")) %>%
-    tidyr::separate(affiliation,sep="_FacetSep_",into=c("id_affiation","affiliation"))
+    tidyr::separate(affiliation,sep="_FacetSep_",into=c("id_affiliation","affiliation"))
   if(method=="longest"){foptimum=max}
   if(method=="shortest"){foptimum=min}
   tib_authors_names=tibble::tibble(auth=data %>%
@@ -72,6 +72,9 @@ tidy_ref_authors=function(data,method="shortest"){
     dplyr::mutate(affiliation=dplyr::case_when(is.na(affiliation)~affmaj,
                                                TRUE~affiliation)) %>%
     dplyr::select(-affmaj)
+  dat=dat %>%
+    dplyr::mutate(name_simplified=stringr::str_extract(name,"(?<=\\s).*$"),
+                  affiliation_simplified=stringr::str_replace_all(affiliation,"^[A-Z0-9]*",""))
   return(dat)
 }
 
@@ -82,12 +85,13 @@ tidy_ref_authors=function(data,method="shortest"){
 #' @examples
 #' data=extract_collection("EVS_UMR5600", nmax=200)
 #' data_ref_authors=tidy_ref_authors(data)
-#' data_labs=tidy_groups(data,type="labs")
+#' data_labs=tidy_groups(data_ref_authors,type="labs")
 tidy_groups=function(data_ref_authors,method="shortest", type="people"){
   if(type=="labs"){data_ref_authors=data_ref_authors %>%
-    dplyr::mutate(name=affiliation)}
+    dplyr::mutate(name=affiliation,
+                  name_simplified=affiliation_simplified)}
   dat_groups=data_ref_authors %>%
-    dplyr::group_by(name,affiliation, producedDateY_i, docType_s) %>%
+    dplyr::group_by(name,name_simplified,affiliation, producedDateY_i, docType_s) %>%
     dplyr::summarise(nrefs=dplyr::n_distinct(id_ref),
                      .groups="drop")
 
@@ -97,9 +101,9 @@ tidy_groups=function(data_ref_authors,method="shortest", type="people"){
     dplyr::filter(is.na(type)| type %in% c("adj","ver","nom")) %>%
     dplyr::mutate(lemma_completed=dplyr::case_when(is.na(lemma)~word,
                                                    TRUE~lemma))
-  spec_unique=mixr::tidy_specificities(res %>% dplyr::filter(!is.na(lemma)),
-                                       cat1=name,
-                                       cat2=lemma) %>%
+  spec_unique=tidy_specificities(res %>% dplyr::filter(!is.na(lemma)),
+                                 cat1=name,
+                                 cat2=lemma) %>%
     dplyr::arrange(name,desc(spec)) %>%
     dplyr::group_by(name) %>%
     tidyr::nest() %>%
