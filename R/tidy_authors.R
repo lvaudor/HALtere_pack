@@ -74,7 +74,7 @@ tidy_ref_authors=function(data,method="shortest"){
     dplyr::select(-affmaj)
   dat=dat %>%
     dplyr::mutate(name_simplified=stringr::str_extract(name,"(?<=\\s).*$"),
-                  affiliation_simplified=stringr::str_replace_all(affiliation,"^[A-Z0-9]*",""))
+                  affiliation_simplified=stringr::str_replace_all(affiliation,"[^A-Z0-9]*",""))
   return(dat)
 }
 
@@ -115,6 +115,6 @@ tidy_groups=function(data_ref_authors,method="shortest", type="people"){
                        dplyr::select(name,lemma,spec),
                      by="name") %>%
     dplyr::mutate(lemma=dplyr::case_when(is.na(lemma)~name,
-                                         TRUE~lemma)) %>%
+                                         TRUE~lemma))
   return(dat_groups)
 }

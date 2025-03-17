@@ -4,7 +4,7 @@
 #' @return a tibble
 #' @export
 #' @examples
-#' data_BIOEENVIS=extract_collection("BIOEENVIS", nmax=+Inf)
+#' data_BIOEENVIS=extract_collection("BIOEENVIS", nmax=200)
 #' data_text=tidy_text(data_BIOEENVIS,"text")
 tidy_text=function(data,column){
   string_column=column
@@ -16,9 +16,9 @@ tidy_text=function(data,column){
   res=res %>%
     dplyr::left_join(lexicon_en,by="word") %>%
     dplyr::filter(is.na(type)| type %in% c("adj","ver","nom")) %>%
-    dplyr::select(id_ref,producedDateY_i,word,lemma,type) %>%
+    dplyr::select(id_ref,docType_s,producedDateY_i,word,lemma,type) %>%
     dplyr::group_by(id_ref) %>%
     dplyr::mutate(n=purrr::map_int(lemma,~length(is.na))) %>%
-    ungroup()
+    dplyr::ungroup()
   return(res)
 }

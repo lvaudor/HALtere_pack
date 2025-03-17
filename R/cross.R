@@ -20,7 +20,7 @@ cross_by_group=function(data_ref_authors_oneref, var_groups="name"){
 #' @examples
 #' data=extract_collection("BIOEENVIS", nmax=200)
 #' data_ref_authors=tidy_ref_authors(data)
-#' data_groups=tidy_groups(data)
+#' data_groups=tidy_groups(data_ref_authors, type="people")
 #' HALtere::cross(data_groups, data_ref_authors)
 #' data_groups=tidy_groups(data_ref_authors,type="labs")
 #' HALtere::cross(data_groups,data_ref_authors)
@@ -36,7 +36,7 @@ cross=function(data_groups,data_ref_authors){
     dplyr::summarise(nlinks=dplyr::n(),.groups="drop") %>%
     dplyr::ungroup()
     data_groups=data_groups %>%
-        dplyr::group_by(docType_s,producedDateY_i,affiliation,name) %>%
+        dplyr::group_by(docType_s,producedDateY_i,affiliation,name,name_simplified) %>%
         dplyr::summarise(nrefs=sum(nrefs),.groups="drop")
     crossed_data=crossed_data %>%
       dplyr::left_join(data_groups,
